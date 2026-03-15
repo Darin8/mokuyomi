@@ -1,6 +1,7 @@
 import asyncio
 import pytest
 from unittest.mock import MagicMock
+import httpx._urlparse as _httpx_urlparse
 
 # ── Token helper ─────────────────────────────────────────────────────────────
 
@@ -25,6 +26,15 @@ def tmp_db(monkeypatch, tmp_path):
     monkeypatch.setattr(db_mod, "DB_PATH", db_file)
     asyncio.run(db_mod.init_db())
     yield db_file
+
+# ── URL normalization passthrough for path-traversal tests ───────────────────
+# httpx normalises ".." segments before sending; disable that so our route
+# handler actually receives the raw filename and can reject it with 400.
+
+@pytest.fixture(autouse=True)
+def preserve_url_dots(monkeypatch):
+    """Prevent httpx from resolving '..' segments in test URLs."""
+    monkeypatch.setattr(_httpx_urlparse, "normalize_path", lambda path: path)
 
 # ── Celery mock ───────────────────────────────────────────────────────────────
 

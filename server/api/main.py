@@ -1,7 +1,9 @@
 # server/api/main.py
+import os
 import uuid
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 from api.auth import require_auth
 from api.database import init_db, create_job, list_jobs as db_list_jobs, get_job
 from api.models import SubmitJobRequest, JobCreatedResponse, JobStatusResponse, JobSummary
@@ -39,3 +41,15 @@ async def get_job_status(job_id: str):
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+@app.get("/jobs/{job_id}/pages/{filename:path}")
+async def serve_page(job_id: str, filename: str, token: str = Query(None)):
+    from api.config import settings as _s
+    if token != _s.token:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    if ".." in filename or "/" in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    file_path = os.path.join(_s.processed_dir, job_id, filename)
+    if not os.path.isfile(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(file_path, media_type="text/html")
