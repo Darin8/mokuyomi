@@ -59,3 +59,22 @@ def test_list_jobs_returns_submitted():
     assert response.status_code == 200
     jobs = response.json()
     assert any(j["chapter_id"] == "ch-001" for j in jobs)
+
+def test_get_job_status():
+    create_resp = client.post("/jobs", json={
+        "source_url": "https://example.com/1",
+        "chapter_id": "ch-001"
+    }, headers=AUTH_HEADER)
+    job_id = create_resp.json()["job_id"]
+
+    resp = client.get(f"/jobs/{job_id}/status", headers=AUTH_HEADER)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["state"] == "pending"
+    assert body["progress"] == 0.0
+    assert body["error_message"] is None
+    assert body["page_count"] is None
+
+def test_get_nonexistent_job_returns_404():
+    resp = client.get("/jobs/nonexistent-id/status", headers=AUTH_HEADER)
+    assert resp.status_code == 404

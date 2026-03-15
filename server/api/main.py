@@ -31,3 +31,11 @@ async def submit_job(request: SubmitJobRequest):
 @app.get("/jobs", response_model=list[JobSummary], dependencies=[Depends(require_auth)])
 async def list_all_jobs():
     return await db_list_jobs()
+
+@app.get("/jobs/{job_id}/status", response_model=JobStatusResponse,
+         dependencies=[Depends(require_auth)])
+async def get_job_status(job_id: str):
+    job = await get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
