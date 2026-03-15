@@ -30,3 +30,32 @@ def test_list_jobs_returns_all():
     chapter_ids = {j["chapter_id"] for j in jobs}
     assert "ch-1" in chapter_ids
     assert "ch-2" in chapter_ids
+
+from fastapi.testclient import TestClient
+from api.main import app
+from tests.conftest import AUTH_HEADER
+
+client = TestClient(app)
+
+# ── Endpoint tests ────────────────────────────────────────────────────────────
+
+def test_submit_job_returns_201():
+    response = client.post("/jobs", json={
+        "source_url": "https://example.com/chapter/1",
+        "chapter_id": "ch-001"
+    }, headers=AUTH_HEADER)
+    assert response.status_code == 201
+    body = response.json()
+    assert body["chapter_id"] == "ch-001"
+    assert body["state"] == "pending"
+    assert "job_id" in body
+
+def test_list_jobs_returns_submitted():
+    client.post("/jobs", json={
+        "source_url": "https://example.com/1",
+        "chapter_id": "ch-001"
+    }, headers=AUTH_HEADER)
+    response = client.get("/jobs", headers=AUTH_HEADER)
+    assert response.status_code == 200
+    jobs = response.json()
+    assert any(j["chapter_id"] == "ch-001" for j in jobs)
