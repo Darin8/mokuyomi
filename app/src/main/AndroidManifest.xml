@@ -209,6 +209,11 @@
                 android:resource="@xml/s_pen_actions"/>
         </activity>
         <activity
+            android:name=".ui.reader.mokuro.MokuroReaderActivity"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden"
+            android:exported="false"
+            android:theme="@style/Theme.Tachiyomi" />
+        <activity
             android:name=".ui.security.UnlockActivity"
             android:exported="false"
             android:theme="@style/Theme.Tachiyomi" />

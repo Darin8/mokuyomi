@@ -56,6 +56,7 @@ import eu.kanade.tachiyomi.ui.entries.manga.track.MangaTrackInfoDialogHomeScreen
 import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.library.manga.MangaLibraryTab
 import eu.kanade.tachiyomi.ui.reader.ReaderActivity
+import eu.kanade.tachiyomi.ui.reader.mokuro.MokuroReaderActivity
 import eu.kanade.tachiyomi.ui.setting.SettingsScreen
 import eu.kanade.tachiyomi.ui.webview.WebViewScreen
 import eu.kanade.tachiyomi.util.system.copyToClipboard
@@ -127,7 +128,16 @@ class MangaScreen(
             chapterSwipeStartAction = screenModel.chapterSwipeStartAction,
             chapterSwipeEndAction = screenModel.chapterSwipeEndAction,
             navigateUp = navigator::pop,
-            onChapterClicked = { openChapter(context, it) },
+            onChapterClicked = { chapter ->
+                val mokuroJob = successState.mokuroJobs[chapter.id]
+                if (mokuroJob?.isDone == true) {
+                    context.startActivity(
+                        MokuroReaderActivity.newIntent(context, mokuroJob.jobId, mokuroJob.pageCount ?: 1)
+                    )
+                } else {
+                    openChapter(context, chapter)
+                }
+            },
             onDownloadChapter = screenModel::runChapterDownloadActions.takeIf { !successState.source.isLocalOrStub() },
             onAddToLibraryClicked = {
                 screenModel.toggleFavorite()
