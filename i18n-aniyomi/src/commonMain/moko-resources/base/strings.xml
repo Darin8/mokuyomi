@@ -582,4 +582,17 @@
     <string name="pref_download_fillermarked_items">Allow downloading of fillermarked episodes</string>
     <string name="show_episode_previews">Episode thumbnails</string>
     <string name="show_episode_summaries">Episode summaries</string>
+
+    <!-- Mokuro integration -->
+    <string name="label_mokuro">Mokuro</string>
+    <string name="pref_mokuro_summary">Japanese reader with OCR and dictionary</string>
+    <string name="pref_mokuro_server_group">Server</string>
+    <string name="pref_mokuro_server_url">Server URL</string>
+    <string name="pref_mokuro_server_url_summary">Base URL of your Mokuro server (e.g. http://192.168.1.10:8000)</string>
+    <string name="pref_mokuro_token">Bearer token</string>
+    <string name="pref_mokuro_token_summary">Authentication token configured on the server</string>
+    <string name="action_send_to_mokuro">Send to Mokuro</string>
+    <string name="action_retry_mokuro">Retry Mokuro</string>
+    <string name="mokuro_reprocess_confirmation">This chapter is already processed. Reprocess?</string>
+    <string name="mokuro_sync_jobs">Sync jobs from server</string>
 </resources>
