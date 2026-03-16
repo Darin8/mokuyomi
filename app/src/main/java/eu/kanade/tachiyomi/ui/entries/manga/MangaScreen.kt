@@ -167,7 +167,19 @@ class MangaScreen(
             onTagSearch = { scope.launch { performGenreSearch(navigator, it, screenModel.source!!) } },
             onFilterButtonClicked = screenModel::showSettingsDialog,
             onRefresh = screenModel::fetchAllFromSource,
-            onContinueReading = { continueReading(context, screenModel.getNextUnreadChapter()) },
+            onContinueReading = {
+                val chapter = screenModel.getNextUnreadChapter()
+                if (chapter != null) {
+                    val mokuroJob = successState.mokuroJobs[chapter.id]
+                    if (mokuroJob?.isDone == true) {
+                        context.startActivity(
+                            MokuroReaderActivity.newIntent(context, mokuroJob.jobId, mokuroJob.pageCount ?: 1)
+                        )
+                    } else {
+                        openChapter(context, chapter)
+                    }
+                }
+            },
             onSearch = { query, global -> scope.launch { performSearch(navigator, query, global) } },
             onCoverClicked = screenModel::showCoverDialog,
             onShareClicked = { shareManga(context, screenModel.manga, screenModel.source) }.takeIf { isHttpSource },

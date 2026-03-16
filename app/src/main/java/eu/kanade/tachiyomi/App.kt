@@ -193,11 +193,10 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
                                 )
                             )
                         }
+                        prefs.initialSyncDone().set(true)
                     }
                 } catch (e: Exception) {
                     logcat(LogPriority.WARN, e) { "Mokuro initial sync failed: ${e.message}" }
-                } finally {
-                    prefs.initialSyncDone().set(true)
                 }
             }
         }
