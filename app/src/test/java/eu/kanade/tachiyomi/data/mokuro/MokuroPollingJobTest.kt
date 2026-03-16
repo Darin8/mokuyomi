@@ -55,4 +55,27 @@ class MokuroPollingJobTest {
             upsertMokuroJob.await(match { it.state == "failed" && it.errorMessage == "gallery-dl failed" })
         }
     }
+
+    @Test
+    fun `poll returns timeout and upserts failed state when deadline exceeded`() = runTest {
+        every { preferences.serverUrl().get() } returns "http://srv"
+        every { preferences.token().get() } returns "tok"
+        coEvery { getMokuroJob.await(1L) } returns pendingJob
+        every {
+            apiClient.getJobStatus("http://srv", "tok", "j1")
+        } returns MokuroApiClient.JobStatusResponse("j1", "1", "processing", 0.5f, null, null)
+
+        // Use tiny timeout so test completes immediately
+        val poller = MokuroJobPoller(
+            getMokuroJob, upsertMokuroJob, apiClient, preferences,
+            pollIntervalMs = 1L,
+            timeoutMs = 1L,
+        )
+        val result = poller.poll(chapterId = 1L)
+
+        result shouldBe "timeout"
+        coVerify {
+            upsertMokuroJob.await(match { it.state == "failed" && it.errorMessage == "Processing timed out" })
+        }
+    }
 }
