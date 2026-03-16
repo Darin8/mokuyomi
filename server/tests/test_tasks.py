@@ -15,9 +15,8 @@ def test_process_chapter_sets_done_on_success(seeded_job, tmp_path, monkeypatch)
     with patch("worker.tasks.fetch_images", return_value=str(tmp_path / "imgs")), \
          patch("worker.tasks.run_mokuro", return_value=5), \
          patch("worker.tasks.copy_output"):
-        from worker import tasks
-        import importlib; importlib.reload(tasks)  # pick up fresh monkeypatched settings
-        tasks.process_chapter("job-001")
+        from worker.tasks import process_chapter
+        process_chapter("job-001")
     job = asyncio.run(get_job("job-001"))
     assert job["state"] == "done"
     assert job["progress"] == 1.0
