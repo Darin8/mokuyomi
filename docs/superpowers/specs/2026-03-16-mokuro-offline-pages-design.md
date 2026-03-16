@@ -18,10 +18,13 @@ Add `is_offline_available INTEGER NOT NULL DEFAULT 0` to the `mokuro_jobs` SQLDe
 
 `MokuroJob` domain model gains `isOfflineAvailable: Boolean`.
 
+**Important:** When updating `mokuro_jobs.sq`, all four named queries (`selectByChapterId`, `selectAll`, `insertOrReplace`, and any others) must be updated to include the new column — not just the `CREATE TABLE` statement. SQLDelight generates code from the named queries, so a column missing from `insertOrReplace` will cause a compile error.
+
 ### 2. `MokuroPageDownloadJob` (new WorkManager CoroutineWorker)
 
-- **Input:** `chapterId` (Long), `jobId` (String), `pageCount` (Int), `chapterName` (String), `serverUrl` (String), `token` (String)
-- **Storage path:** `context.filesDir/mokuro/{jobId}/page_001.html` … `page_NNN.html`
+- **Input data:** `chapterId` (Long), `jobId` (String), `pageCount` (Int), `chapterName` (String)
+- **Runtime dependencies:** `MokuroPreferences` (injected via Injekt) — reads `serverUrl` and `token` from preferences at `doWork()` time, exactly as `MokuroJobPoller` does. Neither token nor serverUrl are passed via WorkManager input data (WorkManager data is persisted to disk; tokens must not be stored there).
+- **Storage path:** `context.filesDir/mokuro/{jobId}/page_001.html` … `page_NNN.html`. Both the Worker and `MokuroReaderActivity` call `applicationContext.filesDir`, which resolves to the same directory in the same process.
 - **Behaviour:**
   - Runs as a foreground service with a progress notification
   - Downloads pages 1..pageCount sequentially using blocking OkHttp `execute()` on `Dispatchers.IO`
@@ -33,14 +36,14 @@ Add `is_offline_available INTEGER NOT NULL DEFAULT 0` to the `mokuro_jobs` SQLDe
 
 ### 3. Reader fallback
 
-`MokuroReaderActivity.loadCurrentPage()` checks for `filesDir/mokuro/{jobId}/page_NNN.html` before using the server URL. If the local file exists, loads via `file://{absolutePath}`. Otherwise falls back to the existing server URL construction. No state needed — file presence is the source of truth.
+`MokuroReaderActivity.loadCurrentPage()` checks for `filesDir/mokuro/{jobId}/page_NNN.html` before using the server URL. If the local file exists, loads via `file://{absolutePath}`. Otherwise falls back to the existing server URL construction. No DB state check needed — file presence is the source of truth.
 
 ### 4. Chapter menu actions
 
 In `EntryBottomActionMenu` / `MangaScreen`, add two new states for selected chapters where `isDone == true`:
 
-- **"Download offline"** — shown when `isDone && !isOfflineAvailable`. Enqueues `MokuroPageDownloadJob` manually. Visible for single or batch selection.
-- **"Delete offline pages"** — shown when `isOfflineAvailable`. Deletes `filesDir/mokuro/{jobId}/` and upserts `isOfflineAvailable = false`.
+- **"Download offline"** — shown when all selected done chapters have `!isOfflineAvailable`. Enqueues `MokuroPageDownloadJob` for each. For mixed selections (some have offline, some don't), show "Download offline" and only enqueue jobs for chapters where `!isOfflineAvailable`.
+- **"Delete offline pages"** — shown when all selected done chapters have `isOfflineAvailable == true`. Deletes `filesDir/mokuro/{jobId}/` for each and upserts `isOfflineAvailable = false`. For mixed selections, show "Delete offline pages" and only delete where `isOfflineAvailable == true`.
 
 These replace the "Send to Mokuro" / "Retry Mokuro" states for done chapters (a done chapter cannot be re-submitted).
 
@@ -49,9 +52,11 @@ These replace the "Send to Mokuro" / "Retry Mokuro" states for done chapters (a 
 ```
 MokuroPollingJob gets "done"
   → notifier.showDone()
-  → MokuroPageDownloadJob.enqueue(chapterId, jobId, pageCount, chapterName, serverUrl, token)
+  → MokuroPageDownloadJob.enqueue(chapterId, jobId, pageCount, chapterName)
 
-MokuroPageDownloadJob runs (foreground service)
+MokuroPageDownloadJob.doWork()
+  → serverUrl = Injekt.get<MokuroPreferences>().serverUrl().get()
+  → token = Injekt.get<MokuroPreferences>().token().get()
   → for page in 1..pageCount:
        GET {serverUrl}/jobs/{jobId}/pages/page_NNN.html?token={token}
        write to filesDir/mokuro/{jobId}/page_NNN.html
@@ -65,12 +70,12 @@ MokuroPageDownloadJob runs (foreground service)
        Result.failure()
 
 MokuroReaderActivity.loadCurrentPage()
-  → localFile = File(filesDir, "mokuro/$jobId/page_NNN.html")
+  → localFile = File(applicationContext.filesDir, "mokuro/$jobId/page_NNN.html")
   → if localFile.exists(): webView.loadUrl("file://${localFile.absolutePath}")
   → else: webView.loadUrl(apiClient.pageUrl(serverUrl, token, jobId, currentPage))
 
 "Delete offline pages" tapped
-  → delete File(filesDir, "mokuro/$jobId/") recursively
+  → delete File(applicationContext.filesDir, "mokuro/$jobId/") recursively
   → upsertMokuroJob(job.copy(isOfflineAvailable = false))
 ```
 
@@ -108,28 +113,29 @@ New entries in `i18n-aniyomi/.../strings.xml`:
 
 ## DB Migration
 
-SQLDelight handles schema evolution via migration files. A new migration file adds the column:
+The current schema version is 32. Create migration file `data/src/main/sqldelight/migrations/33.sqm`:
 
 ```sql
 ALTER TABLE mokuro_jobs ADD COLUMN is_offline_available INTEGER NOT NULL DEFAULT 0;
 ```
 
+The database version constant (in `DatabaseHandler` / `SqlDriver` setup) must be incremented from 32 to 33.
+
 ## Files Created / Modified
 
 | File | Change |
 |---|---|
-| `data/src/main/sqldelight/data/mokuro_jobs.sq` | Add `is_offline_available` column |
-| `data/src/main/sqldelight/data/migrations/N.sqm` | ALTER TABLE migration |
+| `data/src/main/sqldelight/data/mokuro_jobs.sq` | Add `is_offline_available` column + update all named queries |
+| `data/src/main/sqldelight/migrations/33.sqm` | ALTER TABLE migration (schema version 32 → 33) |
 | `domain/src/main/java/tachiyomi/domain/mokuro/model/MokuroJob.kt` | Add `isOfflineAvailable: Boolean` |
-| `data/src/main/java/tachiyomi/data/mokuro/MokuroJobRepositoryImpl.kt` | Map new column |
+| `data/src/main/java/tachiyomi/data/mokuro/MokuroJobRepositoryImpl.kt` | Map new column in mapper |
 | `app/.../data/mokuro/MokuroPageDownloadJob.kt` | New WorkManager job |
 | `app/.../data/mokuro/MokuroPollingJob.kt` | Enqueue download job after "done" |
 | `app/.../data/mokuro/MokuroNotifier.kt` | Add progress/offline-ready/offline-failed methods |
-| `app/.../data/notification/Notifications.kt` | No change needed (reuses existing channel) |
 | `app/.../ui/reader/mokuro/MokuroReaderActivity.kt` | Local file fallback in `loadCurrentPage` |
-| `app/.../ui/entries/manga/MangaScreenModel.kt` | `deleteOfflinePages()` method |
-| `app/.../ui/entries/manga/MangaScreen.kt` | Download/delete menu items |
-| `app/.../presentation/entries/components/EntryBottomActionMenu.kt` | New button states |
+| `app/.../ui/entries/manga/MangaScreenModel.kt` | `downloadOfflinePages()` and `deleteOfflinePages()` methods |
+| `app/.../ui/entries/manga/MangaScreen.kt` | Download/delete menu items wiring |
+| `app/.../presentation/entries/components/EntryBottomActionMenu.kt` | New button states (13 total confirm slots) |
 | `i18n-aniyomi/.../strings.xml` | 5 new strings |
 
 ## Out of Scope
