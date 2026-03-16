@@ -9,7 +9,7 @@ import eu.kanade.tachiyomi.util.system.notificationManager
 class MokuroNotifier(private val context: Context) {
 
     // Give each chapter a unique notification ID derived from its ID
-    private fun notifId(chapterId: Long): Int =
+    internal fun notifId(chapterId: Long): Int =
         Notifications.ID_MOKURO_PROGRESS - (chapterId % 500).toInt()
 
     fun showProgress(chapterId: Long, chapterName: String, progress: Float) {

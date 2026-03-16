@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.data.mokuro
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import tachiyomi.domain.mokuro.interactor.GetMokuroJobByChapterId
 import tachiyomi.domain.mokuro.interactor.UpsertMokuroJob
@@ -35,6 +36,8 @@ class MokuroJobPoller(
                     "done", "failed" -> return status.state
                     else -> delay(pollIntervalMs)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 delay(pollIntervalMs)
             }

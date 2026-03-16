@@ -34,7 +34,7 @@ class MokuroPollingJob(
             .setOngoing(true)
             .setProgress(100, 0, true)
             .build()
-        return ForegroundInfo(Notifications.ID_MOKURO_PROGRESS - (chapterId % 500).toInt(), notification)
+        return ForegroundInfo(notifier.notifId(chapterId), notification)
     }
 
     override suspend fun doWork(): Result = withIOContext {
@@ -51,15 +51,21 @@ class MokuroPollingJob(
             preferences = Injekt.get<MokuroPreferences>(),
         )
 
-        when (poller.poll(chapterId)) {
-            "done" -> notifier.showDone(chapterId, chapterName)
+        return@withIOContext when (poller.poll(chapterId)) {
+            "done" -> {
+                notifier.showDone(chapterId, chapterName)
+                Result.success()
+            }
             "failed" -> {
                 val job = Injekt.get<GetMokuroJobByChapterId>().await(chapterId)
                 notifier.showFailed(chapterId, chapterName, job?.errorMessage)
+                Result.failure()
             }
-            "timeout" -> notifier.showFailed(chapterId, chapterName, "Processing timed out")
+            else -> { // "timeout"
+                notifier.showFailed(chapterId, chapterName, "Processing timed out")
+                Result.failure()
+            }
         }
-        Result.success()
     }
 
     companion object {
