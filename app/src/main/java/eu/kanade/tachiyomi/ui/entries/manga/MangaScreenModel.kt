@@ -44,6 +44,7 @@ import eu.kanade.tachiyomi.util.removeCovers
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.catch
@@ -90,7 +91,6 @@ import eu.kanade.tachiyomi.data.mokuro.MokuroApiClient
 import eu.kanade.tachiyomi.data.mokuro.MokuroPollingJob
 import eu.kanade.tachiyomi.data.mokuro.MokuroPreferences
 import tachiyomi.domain.mokuro.interactor.GetAllMokuroJobs
-import tachiyomi.domain.mokuro.interactor.GetMokuroJobByChapterId
 import tachiyomi.domain.mokuro.interactor.UpsertMokuroJob
 import tachiyomi.domain.mokuro.model.MokuroJob
 import tachiyomi.source.local.entries.manga.isLocal
@@ -128,7 +128,6 @@ class MangaScreenModel(
     private val mangaRepository: MangaRepository = Injekt.get(),
     private val filterChaptersForDownload: FilterChaptersForDownload = Injekt.get(),
     private val getAllMokuroJobs: GetAllMokuroJobs = Injekt.get(),
-    private val getMokuroJobByChapterId: GetMokuroJobByChapterId = Injekt.get(),
     private val upsertMokuroJob: UpsertMokuroJob = Injekt.get(),
     private val mokuroApiClient: MokuroApiClient = Injekt.get(),
     private val mokuroPreferences: MokuroPreferences = Injekt.get(),
@@ -223,9 +222,11 @@ class MangaScreenModel(
         }
 
         screenModelScope.launchIO {
-            getAllMokuroJobs.subscribe().collectLatest { jobs ->
-                updateSuccessState { it.copy(mokuroJobs = jobs.associateBy { it.chapterId }) }
-            }
+            getAllMokuroJobs.subscribe()
+                .flowWithLifecycle(lifecycle)
+                .collectLatest { jobs ->
+                    updateSuccessState { it.copy(mokuroJobs = jobs.associateBy { it.chapterId }) }
+                }
         }
 
         observeDownloads()
@@ -1166,6 +1167,8 @@ class MangaScreenModel(
                     )
                 )
                 MokuroPollingJob.enqueue(context, chapter.id, chapter.name)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 logcat(LogPriority.ERROR, e) { "Failed to submit mokuro job for chapter ${chapter.id}" }
                 withUIContext { context.toast("Failed to send to Mokuro: ${e.message}") }
