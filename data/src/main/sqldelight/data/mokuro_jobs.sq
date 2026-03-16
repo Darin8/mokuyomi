@@ -1,0 +1,42 @@
+CREATE TABLE mokuro_jobs(
+    chapter_id    INTEGER NOT NULL PRIMARY KEY,
+    job_id        TEXT    NOT NULL,
+    state         TEXT    NOT NULL,
+    page_count    INTEGER,
+    error_message TEXT,
+    server_url    TEXT    NOT NULL,
+    created_at    INTEGER NOT NULL
+);
+
+selectByChapterId:
+SELECT
+    chapter_id,
+    job_id,
+    state,
+    page_count,
+    error_message,
+    server_url,
+    created_at
+FROM mokuro_jobs
+WHERE chapter_id = ?;
+
+selectAll:
+SELECT
+    chapter_id,
+    job_id,
+    state,
+    page_count,
+    error_message,
+    server_url,
+    created_at
+FROM mokuro_jobs;
+
+insertOrReplace:
+INSERT OR REPLACE INTO mokuro_jobs(
+    chapter_id, job_id, state, page_count, error_message, server_url, created_at
+)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+deleteByChapterId:
+DELETE FROM mokuro_jobs
+WHERE chapter_id = ?;
