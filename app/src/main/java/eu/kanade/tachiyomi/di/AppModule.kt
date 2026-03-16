@@ -13,6 +13,7 @@ import dataanime.Animes
 import eu.kanade.domain.track.anime.store.DelayedAnimeTrackingStore
 import eu.kanade.domain.track.manga.store.DelayedMangaTrackingStore
 import eu.kanade.tachiyomi.BuildConfig
+import eu.kanade.tachiyomi.data.mokuro.MokuroApiClient
 import eu.kanade.tachiyomi.data.cache.AnimeBackgroundCache
 import eu.kanade.tachiyomi.data.cache.AnimeCoverCache
 import eu.kanade.tachiyomi.data.cache.ChapterCache
@@ -173,6 +174,7 @@ class AppModule(val app: Application) : InjektModule {
         addSingletonFactory { GetMokuroJobByChapterId(get()) }
         addSingletonFactory { GetAllMokuroJobs(get()) }
         addSingletonFactory { UpsertMokuroJob(get()) }
+        addSingletonFactory { MokuroApiClient(get<NetworkHelper>().client, get()) }
 
         addSingletonFactory {
             Json {
