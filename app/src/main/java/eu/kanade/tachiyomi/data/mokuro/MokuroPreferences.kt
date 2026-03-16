@@ -6,4 +6,5 @@ import tachiyomi.core.common.preference.PreferenceStore
 class MokuroPreferences(private val preferenceStore: PreferenceStore) {
     fun serverUrl() = preferenceStore.getString("mokuro_server_url", "")
     fun token() = preferenceStore.getString("mokuro_token", "")
+    fun initialSyncDone() = preferenceStore.getBoolean("mokuro_initial_sync_done", false)
 }

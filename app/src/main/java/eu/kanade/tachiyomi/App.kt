@@ -47,7 +47,12 @@ import eu.kanade.tachiyomi.util.system.DeviceUtil
 import eu.kanade.tachiyomi.util.system.GLUtil
 import eu.kanade.tachiyomi.util.system.WebViewUtil
 import eu.kanade.tachiyomi.util.system.animatorDurationScale
+import eu.kanade.tachiyomi.data.mokuro.MokuroApiClient
+import eu.kanade.tachiyomi.data.mokuro.MokuroPreferences
 import eu.kanade.tachiyomi.util.system.cancelNotification
+import kotlinx.coroutines.launch
+import tachiyomi.domain.mokuro.interactor.UpsertMokuroJob
+import tachiyomi.domain.mokuro.model.MokuroJob
 import eu.kanade.tachiyomi.util.system.notify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
@@ -162,6 +167,40 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
         }
 
         initializeMigrator()
+
+        // Sync Mokuro job records from server on first launch
+        scope.launch(Dispatchers.IO) {
+            val prefs = Injekt.get<MokuroPreferences>()
+            if (!prefs.initialSyncDone().get()) {
+                try {
+                    val serverUrl = prefs.serverUrl().get()
+                    val token = prefs.token().get()
+                    if (serverUrl.isNotBlank() && token.isNotBlank()) {
+                        val client = Injekt.get<MokuroApiClient>()
+                        val upsert = Injekt.get<UpsertMokuroJob>()
+                        val summaries = client.listJobs(serverUrl, token)
+                        summaries.forEach { summary ->
+                            val chapterId = summary.chapterId.toLongOrNull() ?: return@forEach
+                            upsert.await(
+                                MokuroJob(
+                                    chapterId = chapterId,
+                                    jobId = summary.jobId,
+                                    state = summary.state,
+                                    pageCount = summary.pageCount,
+                                    errorMessage = null,
+                                    serverUrl = serverUrl,
+                                    createdAt = 0L,
+                                )
+                            )
+                        }
+                    }
+                } catch (e: Exception) {
+                    logcat(LogPriority.WARN, e) { "Mokuro initial sync failed: ${e.message}" }
+                } finally {
+                    prefs.initialSyncDone().set(true)
+                }
+            }
+        }
     }
 
     private fun initializeMigrator() {
