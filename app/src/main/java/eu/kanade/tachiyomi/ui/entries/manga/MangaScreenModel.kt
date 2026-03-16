@@ -86,6 +86,13 @@ import tachiyomi.domain.source.manga.service.MangaSourceManager
 import tachiyomi.domain.track.manga.interactor.GetMangaTracks
 import tachiyomi.i18n.MR
 import tachiyomi.i18n.aniyomi.AYMR
+import eu.kanade.tachiyomi.data.mokuro.MokuroApiClient
+import eu.kanade.tachiyomi.data.mokuro.MokuroPollingJob
+import eu.kanade.tachiyomi.data.mokuro.MokuroPreferences
+import tachiyomi.domain.mokuro.interactor.GetAllMokuroJobs
+import tachiyomi.domain.mokuro.interactor.GetMokuroJobByChapterId
+import tachiyomi.domain.mokuro.interactor.UpsertMokuroJob
+import tachiyomi.domain.mokuro.model.MokuroJob
 import tachiyomi.source.local.entries.manga.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -120,6 +127,11 @@ class MangaScreenModel(
     private val setMangaCategories: SetMangaCategories = Injekt.get(),
     private val mangaRepository: MangaRepository = Injekt.get(),
     private val filterChaptersForDownload: FilterChaptersForDownload = Injekt.get(),
+    private val getAllMokuroJobs: GetAllMokuroJobs = Injekt.get(),
+    private val getMokuroJobByChapterId: GetMokuroJobByChapterId = Injekt.get(),
+    private val upsertMokuroJob: UpsertMokuroJob = Injekt.get(),
+    private val mokuroApiClient: MokuroApiClient = Injekt.get(),
+    private val mokuroPreferences: MokuroPreferences = Injekt.get(),
     val snackbarHostState: SnackbarHostState = SnackbarHostState(),
 ) : StateScreenModel<MangaScreenModel.State>(State.Loading) {
 
@@ -208,6 +220,12 @@ class MangaScreenModel(
                         it.copy(availableScanlators = availableScanlators)
                     }
                 }
+        }
+
+        screenModelScope.launchIO {
+            getAllMokuroJobs.subscribe().collectLatest { jobs ->
+                updateSuccessState { it.copy(mokuroJobs = jobs.associateBy { it.chapterId }) }
+            }
         }
 
         observeDownloads()
@@ -1103,10 +1121,56 @@ class MangaScreenModel(
         data object SettingsSheet : Dialog
         data object TrackSheet : Dialog
         data object FullCover : Dialog
+        data class MokuroReprocessConfirmation(val chapters: List<Chapter>) : Dialog
     }
 
     fun dismissDialog() {
         updateSuccessState { it.copy(dialog = null) }
+    }
+
+    fun sendToMokuro(chapters: List<Chapter>) {
+        screenModelScope.launchIO {
+            val hasDone = chapters.any { successState?.mokuroJobs?.get(it.id)?.isDone == true }
+            if (hasDone) {
+                updateSuccessState { it.copy(dialog = Dialog.MokuroReprocessConfirmation(chapters)) }
+                return@launchIO
+            }
+            submitMokuroJobs(chapters)
+        }
+    }
+
+    fun confirmMokuroReprocess(chapters: List<Chapter>) {
+        dismissDialog()
+        screenModelScope.launchIO { submitMokuroJobs(chapters) }
+    }
+
+    private suspend fun submitMokuroJobs(chapters: List<Chapter>) {
+        val serverUrl = mokuroPreferences.serverUrl().get()
+        val token = mokuroPreferences.token().get()
+        if (serverUrl.isBlank() || token.isBlank()) {
+            withUIContext { context.toast("Mokuro server not configured") }
+            return
+        }
+        chapters.forEach { chapter ->
+            try {
+                val response = mokuroApiClient.submitJob(serverUrl, token, chapter.url, chapter.id)
+                upsertMokuroJob.await(
+                    MokuroJob(
+                        chapterId = chapter.id,
+                        jobId = response.jobId,
+                        state = response.state,
+                        pageCount = null,
+                        errorMessage = null,
+                        serverUrl = serverUrl,
+                        createdAt = System.currentTimeMillis(),
+                    )
+                )
+                MokuroPollingJob.enqueue(context, chapter.id, chapter.name)
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "Failed to submit mokuro job for chapter ${chapter.id}" }
+                withUIContext { context.toast("Failed to send to Mokuro: ${e.message}") }
+            }
+        }
     }
 
     fun showDeleteChapterDialog(chapters: List<Chapter>) {
@@ -1153,6 +1217,7 @@ class MangaScreenModel(
             val isRefreshingData: Boolean = false,
             val dialog: Dialog? = null,
             val hasPromptedToAddBefore: Boolean = false,
+            val mokuroJobs: Map<Long, MokuroJob> = emptyMap(),
         ) : State {
             val processedChapters by lazy {
                 chapters.applyFilters(manga).toList()
