@@ -1,0 +1,44 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+    environment:
+      MOKUYOMI_TOKEN: ${MOKUYOMI_TOKEN}
+      REDIS_URL: redis://redis:6379/0
+      PROCESSED_DIR: /processed
+      DATABASE_PATH: /data/mokuyomi.db
+    volumes:
+      - processed:/processed
+      - db_data:/data
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    environment:
+      MOKUYOMI_TOKEN: ${MOKUYOMI_TOKEN}
+      REDIS_URL: redis://redis:6379/0
+      PROCESSED_DIR: /processed
+      DATABASE_PATH: /data/mokuyomi.db
+    volumes:
+      - processed:/processed
+      - db_data:/data
+      - model_cache:/root/.cache
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  processed:
+  db_data:
+  model_cache:
