@@ -43,6 +43,8 @@ fun DictionaryPopup(
     var loading by remember { mutableStateOf(true) }
 
     LaunchedEffect(word) {
+        loading = true
+        entries = emptyList()
         entries = withContext(Dispatchers.IO) { helper.lookup(word) }
         loading = false
     }

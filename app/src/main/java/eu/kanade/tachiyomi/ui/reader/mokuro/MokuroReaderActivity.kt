@@ -35,6 +35,8 @@ class MokuroReaderActivity : AppCompatActivity() {
     private val dictionaryWord = mutableStateOf("")
     private val dictionaryContext = mutableStateOf("")
 
+    private val jmdictHelper: JmdictHelper by lazy { JmdictHelper(this) }
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,7 +67,7 @@ class MokuroReaderActivity : AppCompatActivity() {
                         DictionaryPopup(
                             word = dictionaryWord.value,
                             sentenceContext = dictionaryContext.value,
-                            helper = JmdictHelper(this@MokuroReaderActivity),
+                            helper = jmdictHelper,
                             onDismiss = { dictionaryVisible.value = false },
                         )
                     }
@@ -80,6 +82,11 @@ class MokuroReaderActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt(STATE_PAGE, currentPage)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        jmdictHelper.close()
     }
 
     private fun loadCurrentPage() {
