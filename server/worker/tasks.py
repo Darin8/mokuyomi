@@ -19,7 +19,7 @@ def _run(coro):
 def fetch_images(source_url: str, dest_dir: str) -> str:
     """Run gallery-dl to fetch chapter images into dest_dir. Returns dest_dir."""
     result = subprocess.run(
-        ["gallery-dl", "-d", dest_dir, source_url],
+        ["gallery-dl", "-d", dest_dir, "--filename", "{filename}", source_url],
         capture_output=True, text=True, timeout=600,
     )
     if result.returncode != 0:
@@ -64,16 +64,9 @@ def process_chapter(job_id: str) -> None:
 
         try:
             _mod.fetch_images(job["source_url"], image_dir)
-
-            image_files = [
-                f for f in os.listdir(image_dir)
-                if f.lower().endswith((".jpg", ".jpeg", ".png", ".webp"))
-            ]
-            _run(update_job(job_id, page_count=len(image_files)))
-
-            _mod.run_mokuro(image_dir, output_dir)
+            page_count = _mod.run_mokuro(image_dir, output_dir)
             _mod.copy_output(output_dir, job_id)
-            _run(update_job(job_id, state="done", progress=1.0))
+            _run(update_job(job_id, state="done", progress=1.0, page_count=page_count))
 
         except Exception as exc:
             partial = os.path.join(settings.processed_dir, job_id)
