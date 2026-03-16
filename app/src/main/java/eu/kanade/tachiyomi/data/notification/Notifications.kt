@@ -81,6 +81,13 @@ object Notifications {
     const val ID_UPDATES_TO_EXTS = -401
     const val ID_EXTENSION_INSTALLER = -402
 
+    /**
+     * Notification channel and ids used by Mokuro processing.
+     */
+    private const val GROUP_MOKURO = "group_mokuro"
+    const val CHANNEL_MOKURO_PROGRESS = "mokuro_progress_channel"
+    const val ID_MOKURO_PROGRESS = -901
+
     private val deprecatedChannels = listOf(
         "downloader_channel",
         "downloader_complete_channel",
@@ -118,6 +125,9 @@ object Notifications {
                 },
                 buildNotificationChannelGroup(GROUP_APK_UPDATES) {
                     setName(context.stringResource(MR.strings.label_recent_updates))
+                },
+                buildNotificationChannelGroup(GROUP_MOKURO) {
+                    setName(context.stringResource(AYMR.strings.label_mokuro))
                 },
             ),
         )
@@ -171,6 +181,11 @@ object Notifications {
                 buildNotificationChannel(CHANNEL_EXTENSIONS_UPDATE, IMPORTANCE_DEFAULT) {
                     setGroup(GROUP_APK_UPDATES)
                     setName(context.stringResource(MR.strings.channel_ext_updates))
+                },
+                buildNotificationChannel(CHANNEL_MOKURO_PROGRESS, IMPORTANCE_LOW) {
+                    setName(context.stringResource(MR.strings.channel_progress))
+                    setGroup(GROUP_MOKURO)
+                    setShowBadge(false)
                 },
             ),
         )
