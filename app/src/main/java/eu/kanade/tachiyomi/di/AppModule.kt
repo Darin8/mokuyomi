@@ -49,6 +49,11 @@ import tachiyomi.data.handlers.anime.AndroidAnimeDatabaseHandler
 import tachiyomi.data.handlers.anime.AnimeDatabaseHandler
 import tachiyomi.data.handlers.manga.AndroidMangaDatabaseHandler
 import tachiyomi.data.handlers.manga.MangaDatabaseHandler
+import tachiyomi.data.mokuro.MokuroJobRepositoryImpl
+import tachiyomi.domain.mokuro.interactor.GetAllMokuroJobs
+import tachiyomi.domain.mokuro.interactor.GetMokuroJobByChapterId
+import tachiyomi.domain.mokuro.interactor.UpsertMokuroJob
+import tachiyomi.domain.mokuro.repository.MokuroJobRepository
 import tachiyomi.domain.source.anime.service.AnimeSourceManager
 import tachiyomi.domain.source.manga.service.MangaSourceManager
 import tachiyomi.domain.storage.service.StorageManager
@@ -161,6 +166,13 @@ class AppModule(val app: Application) : InjektModule {
                 sqlDriverAnime,
             )
         }
+
+        addSingletonFactory<MokuroJobRepository> {
+            MokuroJobRepositoryImpl(get<MangaDatabaseHandler>())
+        }
+        addSingletonFactory { GetMokuroJobByChapterId(get()) }
+        addSingletonFactory { GetAllMokuroJobs(get()) }
+        addSingletonFactory { UpsertMokuroJob(get()) }
 
         addSingletonFactory {
             Json {
