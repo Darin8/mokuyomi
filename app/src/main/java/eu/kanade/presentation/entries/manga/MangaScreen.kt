@@ -73,6 +73,7 @@ import tachiyomi.domain.entries.manga.model.Manga
 import tachiyomi.domain.items.chapter.model.Chapter
 import tachiyomi.domain.items.chapter.service.missingChaptersCount
 import tachiyomi.domain.library.service.LibraryPreferences
+import tachiyomi.domain.mokuro.model.MokuroJob
 import tachiyomi.domain.source.manga.model.StubMangaSource
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.TwoPanelBox
@@ -132,6 +133,10 @@ fun MangaScreen(
     onChapterSelected: (ChapterList.Item, Boolean, Boolean, Boolean) -> Unit,
     onAllChapterSelected: (Boolean) -> Unit,
     onInvertSelection: () -> Unit,
+
+    // For Mokuro
+    onSendToMokuroClicked: (() -> Unit)?,
+    isMokuroRetry: Boolean,
 ) {
     val context = LocalContext.current
     val onCopyTagToClipboard: (tag: String) -> Unit = {
@@ -180,6 +185,8 @@ fun MangaScreen(
             onAllChapterSelected = onAllChapterSelected,
             onInvertSelection = onInvertSelection,
             onSettingsClicked = onSettingsClicked,
+            onSendToMokuroClicked = onSendToMokuroClicked,
+            isMokuroRetry = isMokuroRetry,
         )
     } else {
         MangaScreenLargeImpl(
@@ -216,6 +223,8 @@ fun MangaScreen(
             onAllChapterSelected = onAllChapterSelected,
             onInvertSelection = onInvertSelection,
             onSettingsClicked = onSettingsClicked,
+            onSendToMokuroClicked = onSendToMokuroClicked,
+            isMokuroRetry = isMokuroRetry,
         )
     }
 }
@@ -268,6 +277,8 @@ private fun MangaScreenSmallImpl(
     onChapterSelected: (ChapterList.Item, Boolean, Boolean, Boolean) -> Unit,
     onAllChapterSelected: (Boolean) -> Unit,
     onInvertSelection: () -> Unit,
+    onSendToMokuroClicked: (() -> Unit)?,
+    isMokuroRetry: Boolean,
 ) {
     val chapterListState = rememberLazyListState()
 
@@ -339,6 +350,8 @@ private fun MangaScreenSmallImpl(
                 onDownloadChapter = onDownloadChapter,
                 onMultiDeleteClicked = onMultiDeleteClicked,
                 fillFraction = 1f,
+                onSendToMokuroClicked = onSendToMokuroClicked,
+                isMokuroRetry = isMokuroRetry,
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -462,6 +475,7 @@ private fun MangaScreenSmallImpl(
                         onDownloadChapter = onDownloadChapter,
                         onChapterSelected = onChapterSelected,
                         onChapterSwipe = onChapterSwipe,
+                        mokuroJobs = state.mokuroJobs,
                     )
                 }
             }
@@ -517,6 +531,8 @@ fun MangaScreenLargeImpl(
     onChapterSelected: (ChapterList.Item, Boolean, Boolean, Boolean) -> Unit,
     onAllChapterSelected: (Boolean) -> Unit,
     onInvertSelection: () -> Unit,
+    onSendToMokuroClicked: (() -> Unit)?,
+    isMokuroRetry: Boolean,
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
@@ -585,6 +601,8 @@ fun MangaScreenLargeImpl(
                     onDownloadChapter = onDownloadChapter,
                     onMultiDeleteClicked = onMultiDeleteClicked,
                     fillFraction = 0.5f,
+                    onSendToMokuroClicked = onSendToMokuroClicked,
+                    isMokuroRetry = isMokuroRetry,
                 )
             }
         },
@@ -706,6 +724,7 @@ fun MangaScreenLargeImpl(
                                 onDownloadChapter = onDownloadChapter,
                                 onChapterSelected = onChapterSelected,
                                 onChapterSwipe = onChapterSwipe,
+                                mokuroJobs = state.mokuroJobs,
                             )
                         }
                     }
@@ -725,6 +744,8 @@ private fun SharedMangaBottomActionMenu(
     onMultiDeleteClicked: (List<Chapter>) -> Unit,
     fillFraction: Float,
     modifier: Modifier = Modifier,
+    onSendToMokuroClicked: (() -> Unit)? = null,
+    isMokuroRetry: Boolean = false,
 ) {
     EntryBottomActionMenu(
         visible = selected.isNotEmpty(),
@@ -755,6 +776,8 @@ private fun SharedMangaBottomActionMenu(
             selected.fastAny { it.downloadState == MangaDownload.State.DOWNLOADED }
         },
         isManga = true,
+        onSendToMokuroClicked = onSendToMokuroClicked,
+        isMokuroRetry = isMokuroRetry,
     )
 }
 
@@ -768,6 +791,7 @@ private fun LazyListScope.sharedChapterItems(
     onDownloadChapter: ((List<ChapterList.Item>, ChapterDownloadAction) -> Unit)?,
     onChapterSelected: (ChapterList.Item, Boolean, Boolean, Boolean) -> Unit,
     onChapterSwipe: (ChapterList.Item, LibraryPreferences.ChapterSwipeAction) -> Unit,
+    mokuroJobs: Map<Long, MokuroJob> = emptyMap(),
 ) {
     items(
         items = chapters,
@@ -833,6 +857,7 @@ private fun LazyListScope.sharedChapterItems(
                     onChapterSwipe = {
                         onChapterSwipe(item, it)
                     },
+                    mokuroState = mokuroJobs[item.chapter.id]?.state,
                 )
             }
         }
