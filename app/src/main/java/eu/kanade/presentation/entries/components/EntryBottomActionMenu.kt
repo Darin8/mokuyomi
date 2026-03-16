@@ -33,6 +33,7 @@ import androidx.compose.material.icons.outlined.Input
 import androidx.compose.material.icons.outlined.NewLabel
 import androidx.compose.material.icons.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.RemoveDone
+import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -84,6 +85,8 @@ fun EntryBottomActionMenu(
     onDeleteClicked: (() -> Unit)? = null,
     onExternalClicked: (() -> Unit)? = null,
     onInternalClicked: (() -> Unit)? = null,
+    onSendToMokuroClicked: (() -> Unit)? = null,
+    isMokuroRetry: Boolean = false,
 ) {
     AnimatedVisibility(
         visible = visible,
@@ -103,9 +106,9 @@ fun EntryBottomActionMenu(
             val haptic = LocalHapticFeedback.current
             val confirm =
                 remember {
-                    mutableStateListOf(false, false, false, false, false, false, false, false, false, false, false)
+                    mutableStateListOf(false, false, false, false, false, false, false, false, false, false, false, false)
                 }
-            val confirmRange = 0..<11
+            val confirmRange = 0..<12
             var resetJob: Job? = remember { null }
             val onLongClickItem: (Int) -> Unit = { toConfirmIndex ->
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -235,6 +238,20 @@ fun EntryBottomActionMenu(
                         toConfirm = confirm[10],
                         onLongClick = { onLongClickItem(10) },
                         onClick = onInternalClicked,
+                    )
+                }
+                if (onSendToMokuroClicked != null && isManga) {
+                    val label = if (isMokuroRetry) {
+                        stringResource(AYMR.strings.action_retry_mokuro)
+                    } else {
+                        stringResource(AYMR.strings.action_send_to_mokuro)
+                    }
+                    Button(
+                        title = label,
+                        icon = Icons.Outlined.Translate,
+                        toConfirm = confirm[11],
+                        onLongClick = { onLongClickItem(11) },
+                        onClick = onSendToMokuroClicked,
                     )
                 }
             }

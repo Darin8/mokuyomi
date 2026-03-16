@@ -5,6 +5,9 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -66,6 +69,8 @@ import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.entries.manga.model.Manga
 import tachiyomi.domain.items.chapter.model.Chapter
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.aniyomi.AYMR
+import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.LoadingScreen
 
 class MangaScreen(
@@ -172,6 +177,13 @@ class MangaScreen(
             onChapterSelected = screenModel::toggleSelection,
             onAllChapterSelected = screenModel::toggleAllSelection,
             onInvertSelection = screenModel::invertSelection,
+            onSendToMokuroClicked = {
+                screenModel.sendToMokuro(successState.chapters.filter { it.selected }.map { it.chapter })
+                screenModel.toggleAllSelection(false)
+            },
+            isMokuroRetry = successState.chapters.filter { it.selected }.let { selected ->
+                selected.isNotEmpty() && selected.all { successState.mokuroJobs[it.chapter.id]?.isFailed == true }
+            },
         )
 
         var showScanlatorsDialog by remember { mutableStateOf(false) }
@@ -290,6 +302,23 @@ class MangaScreen(
                     isManga = true,
                     onValueChanged = { interval: Int -> screenModel.setFetchInterval(dialog.manga, interval) }
                         .takeIf { screenModel.isUpdateIntervalEnabled },
+                )
+            }
+            is MangaScreenModel.Dialog.MokuroReprocessConfirmation -> {
+                AlertDialog(
+                    onDismissRequest = onDismissRequest,
+                    title = { Text(stringResource(AYMR.strings.action_send_to_mokuro)) },
+                    text = { Text(stringResource(AYMR.strings.mokuro_reprocess_confirmation)) },
+                    confirmButton = {
+                        TextButton(onClick = { screenModel.confirmMokuroReprocess(dialog.chapters) }) {
+                            Text(stringResource(MR.strings.action_ok))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = onDismissRequest) {
+                            Text(stringResource(MR.strings.action_cancel))
+                        }
+                    },
                 )
             }
         }
