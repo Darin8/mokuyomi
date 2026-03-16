@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.data.mokuro
 
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
@@ -29,14 +28,14 @@ class MokuroApiClientTest {
     }
 
     @Test
-    fun `submitJob sends POST with correct body and returns job`() = runTest {
+    fun `submitJob sends POST with correct body and returns job`() {
         server.enqueue(MockResponse()
             .setBody("""{"job_id":"j1","chapter_id":"42","state":"pending"}""")
             .setResponseCode(201))
 
         val result = client.submitJob(server.url("/").toString().trimEnd('/'), "tok", "http://src/ch/1", 42L)
 
-        result.job_id shouldBe "j1"
+        result.jobId shouldBe "j1"
         result.state shouldBe "pending"
 
         val req = server.takeRequest()
@@ -47,18 +46,46 @@ class MokuroApiClientTest {
     }
 
     @Test
-    fun `getJobStatus sends GET to correct path`() = runTest {
+    fun `getJobStatus sends GET to correct path`() {
         server.enqueue(MockResponse()
             .setBody("""{"job_id":"j1","chapter_id":"42","state":"done","progress":1.0,"page_count":10,"error_message":null}"""))
 
         val result = client.getJobStatus(server.url("/").toString().trimEnd('/'), "tok", "j1")
 
         result.state shouldBe "done"
-        result.page_count shouldBe 10
+        result.pageCount shouldBe 10
 
         val req = server.takeRequest()
         req.path shouldBe "/jobs/j1/status"
         req.getHeader("Authorization") shouldBe "Bearer tok"
+    }
+
+    @Test
+    fun `listJobs returns all jobs`() {
+        server.enqueue(MockResponse()
+            .setBody("""[{"job_id":"j1","chapter_id":"42","state":"done","page_count":5,"created_at":"2026-01-01T00:00:00Z"}]"""))
+
+        val result = client.listJobs(server.url("/").toString().trimEnd('/'), "tok")
+
+        result.size shouldBe 1
+        result[0].jobId shouldBe "j1"
+
+        val req = server.takeRequest()
+        req.method shouldBe "GET"
+        req.path shouldBe "/jobs"
+        req.getHeader("Authorization") shouldBe "Bearer tok"
+    }
+
+    @Test
+    fun `submitJob throws on server error`() {
+        server.enqueue(MockResponse()
+            .setBody("""{"detail":"source_url not supported"}""")
+            .setResponseCode(422))
+
+        val exception = org.junit.jupiter.api.assertThrows<IllegalStateException> {
+            client.submitJob(server.url("/").toString().trimEnd('/'), "tok", "http://src/ch/1", 42L)
+        }
+        exception.message!!.contains("422") shouldBe true
     }
 
     @Test

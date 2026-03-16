@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.data.mokuro
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -12,43 +13,54 @@ class MokuroApiClient(
     private val httpClient: OkHttpClient,
     private val json: Json,
 ) {
+    @Serializable
+    data class SubmitJobRequest(
+        @SerialName("source_url") val sourceUrl: String,
+        @SerialName("chapter_id") val chapterId: String,
+    )
 
     @Serializable
-    data class SubmitJobRequest(val source_url: String, val chapter_id: String)
-
-    @Serializable
-    data class JobCreatedResponse(val job_id: String, val chapter_id: String, val state: String)
+    data class JobCreatedResponse(
+        @SerialName("job_id") val jobId: String,
+        @SerialName("chapter_id") val chapterId: String,
+        val state: String,
+    )
 
     @Serializable
     data class JobStatusResponse(
-        val job_id: String,
-        val chapter_id: String,
+        @SerialName("job_id") val jobId: String,
+        @SerialName("chapter_id") val chapterId: String,
         val state: String,
         val progress: Float,
-        val page_count: Int?,
-        val error_message: String?,
+        @SerialName("page_count") val pageCount: Int?,
+        @SerialName("error_message") val errorMessage: String?,
     )
 
     @Serializable
     data class JobSummary(
-        val job_id: String,
-        val chapter_id: String,
+        @SerialName("job_id") val jobId: String,
+        @SerialName("chapter_id") val chapterId: String,
         val state: String,
-        val page_count: Int?,
-        val created_at: String,
+        @SerialName("page_count") val pageCount: Int?,
+        @SerialName("created_at") val createdAt: String,
     )
 
+    private inline fun <reified T> execute(request: Request): T {
+        return httpClient.newCall(request).execute().use { response ->
+            val body = response.body?.string()
+            if (!response.isSuccessful) error("Server error ${response.code}: $body")
+            json.decodeFromString(body ?: error("Empty response body"))
+        }
+    }
+
     fun submitJob(serverUrl: String, token: String, sourceUrl: String, chapterId: Long): JobCreatedResponse {
-        val body = json.encodeToString(SubmitJobRequest(source_url = sourceUrl, chapter_id = chapterId.toString()))
+        val body = json.encodeToString(SubmitJobRequest(sourceUrl = sourceUrl, chapterId = chapterId.toString()))
         val request = Request.Builder()
             .url("$serverUrl/jobs")
             .addHeader("Authorization", "Bearer $token")
             .post(body.toRequestBody("application/json".toMediaType()))
             .build()
-        return httpClient.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) error("Server error ${response.code}: ${response.body?.string()}")
-            json.decodeFromString(response.body!!.string())
-        }
+        return execute(request)
     }
 
     fun getJobStatus(serverUrl: String, token: String, jobId: String): JobStatusResponse {
@@ -57,10 +69,7 @@ class MokuroApiClient(
             .addHeader("Authorization", "Bearer $token")
             .get()
             .build()
-        return httpClient.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) error("Server error ${response.code}")
-            json.decodeFromString(response.body!!.string())
-        }
+        return execute(request)
     }
 
     fun listJobs(serverUrl: String, token: String): List<JobSummary> {
@@ -69,12 +78,13 @@ class MokuroApiClient(
             .addHeader("Authorization", "Bearer $token")
             .get()
             .build()
-        return httpClient.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) error("Server error ${response.code}")
-            json.decodeFromString(response.body!!.string())
-        }
+        return execute(request)
     }
 
+    /**
+     * Constructs the URL for a processed page.
+     * @param pageIndex 1-based page index (1 = first page, maps to page_001.html).
+     */
     fun pageUrl(serverUrl: String, token: String, jobId: String, pageIndex: Int): String {
         val filename = "page_%03d.html".format(pageIndex)
         return "$serverUrl/jobs/$jobId/pages/$filename?token=$token"
