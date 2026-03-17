@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.ComposeView
 import eu.kanade.tachiyomi.data.mokuro.MokuroApiClient
 import eu.kanade.tachiyomi.data.mokuro.MokuroPreferences
 import eu.kanade.tachiyomi.databinding.ActivityMokuroReaderBinding
+import java.io.File
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -90,10 +91,15 @@ class MokuroReaderActivity : AppCompatActivity() {
     }
 
     private fun loadCurrentPage() {
-        val serverUrl = preferences.serverUrl().get()
-        val token = preferences.token().get()
-        val url = apiClient.pageUrl(serverUrl, token, jobId, currentPage)
-        binding.webView.loadUrl(url)
+        val filename = "page_%03d.html".format(currentPage)
+        val localFile = File(applicationContext.filesDir, "mokuro/$jobId/$filename")
+        if (localFile.exists()) {
+            binding.webView.loadUrl("file://${localFile.absolutePath}")
+        } else {
+            val serverUrl = preferences.serverUrl().get()
+            val token = preferences.token().get()
+            binding.webView.loadUrl(apiClient.pageUrl(serverUrl, token, jobId, currentPage))
+        }
     }
 
     private fun injectWordTapListeners(view: WebView) {
