@@ -85,7 +85,7 @@ class MokuroPollingJobTest {
     }
 
     @Test
-    fun `enqueues download job when state is done`() {
+    fun `enqueue calls enqueueUniqueWork with correct name and KEEP policy`() {
         val chapterId = 1L
         val chapterName = "Chapter 1"
 
