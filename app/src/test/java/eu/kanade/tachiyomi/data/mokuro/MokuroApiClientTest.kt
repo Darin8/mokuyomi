@@ -93,4 +93,19 @@ class MokuroApiClientTest {
         val url = client.pageUrl("http://localhost:8000", "mytoken", "job-uuid", 3)
         url shouldBe "http://localhost:8000/jobs/job-uuid/pages/page_003.html?token=mytoken"
     }
+
+    @Test
+    fun `fetchPageHtml returns HTML content from page endpoint`() {
+        server.enqueue(MockResponse()
+            .setBody("<html><body>page content</body></html>")
+            .setResponseCode(200))
+
+        val result = client.fetchPageHtml(server.url("/").toString().trimEnd('/'), "tok", "job-uuid", 2)
+
+        result shouldBe "<html><body>page content</body></html>"
+
+        val req = server.takeRequest()
+        req.path shouldBe "/jobs/job-uuid/pages/page_002.html?token=tok"
+        req.method shouldBe "GET"
+    }
 }

@@ -89,4 +89,20 @@ class MokuroApiClient(
         val filename = "page_%03d.html".format(pageIndex)
         return "$serverUrl/jobs/$jobId/pages/$filename?token=$token"
     }
+
+    /**
+     * Downloads the HTML content of a single processed page.
+     * @param pageIndex 1-based page index.
+     */
+    fun fetchPageHtml(serverUrl: String, token: String, jobId: String, pageIndex: Int): String {
+        val request = Request.Builder()
+            .url(pageUrl(serverUrl, token, jobId, pageIndex))
+            .get()
+            .build()
+        return httpClient.newCall(request).execute().use { response ->
+            val body = response.body?.string()
+            if (!response.isSuccessful) error("Server error ${response.code}: $body")
+            body ?: error("Empty response body")
+        }
+    }
 }
