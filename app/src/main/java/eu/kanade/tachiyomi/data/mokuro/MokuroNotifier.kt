@@ -43,6 +43,37 @@ class MokuroNotifier(private val context: Context) {
         context.notificationManager.notify(notifId(chapterId), notification)
     }
 
+    fun showDownloadProgress(chapterId: Long, chapterName: String, current: Int, total: Int) {
+        val notification = NotificationCompat.Builder(context, Notifications.CHANNEL_MOKURO_PROGRESS)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(chapterName)
+            .setContentText("Downloading $chapterName — $current / $total pages")
+            .setOngoing(true)
+            .setProgress(total, current, false)
+            .build()
+        context.notificationManager.notify(notifId(chapterId), notification)
+    }
+
+    fun showOfflineReady(chapterId: Long, chapterName: String) {
+        val notification = NotificationCompat.Builder(context, Notifications.CHANNEL_MOKURO_PROGRESS)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(chapterName)
+            .setContentText("Ready for offline reading")
+            .setAutoCancel(true)
+            .build()
+        context.notificationManager.notify(notifId(chapterId), notification)
+    }
+
+    fun showOfflineFailed(chapterId: Long, chapterName: String) {
+        val notification = NotificationCompat.Builder(context, Notifications.CHANNEL_MOKURO_PROGRESS)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(chapterName)
+            .setContentText("Could not download offline pages for $chapterName")
+            .setAutoCancel(true)
+            .build()
+        context.notificationManager.notify(notifId(chapterId), notification)
+    }
+
     fun dismiss(chapterId: Long) {
         context.notificationManager.cancel(notifId(chapterId))
     }
