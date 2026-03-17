@@ -595,4 +595,9 @@
     <string name="action_retry_mokuro">Retry Mokuro</string>
     <string name="mokuro_reprocess_confirmation">This chapter is already processed. Reprocess?</string>
     <string name="mokuro_sync_jobs">Sync jobs from server</string>
+    <string name="action_download_offline">Download offline</string>
+    <string name="action_delete_offline_pages">Delete offline pages</string>
+    <string name="mokuro_downloading_pages">Downloading %1$s — %2$d / %3$d pages</string>
+    <string name="mokuro_offline_ready">Ready for offline reading</string>
+    <string name="mokuro_offline_failed">Could not download offline pages for %1$s</string>
 </resources>

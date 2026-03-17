@@ -55,6 +55,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.io.File
 import logcat.LogPriority
 import mihon.domain.items.chapter.interactor.FilterChaptersForDownload
 import tachiyomi.core.common.i18n.stringResource
@@ -1143,6 +1144,32 @@ class MangaScreenModel(
     fun confirmMokuroReprocess(chapters: List<Chapter>) {
         dismissDialog()
         screenModelScope.launchIO { submitMokuroJobs(chapters) }
+    }
+
+    fun downloadOfflinePages(chapters: List<Chapter>) {
+        screenModelScope.launchIO {
+            val jobs = successState?.mokuroJobs ?: return@launchIO
+            chapters.forEach { chapter ->
+                val job = jobs[chapter.id]
+                if (job?.isDone == true && !job.isOfflineAvailable) {
+                    MokuroPageDownloadJob.enqueue(context, chapter.id, chapter.name)
+                }
+            }
+        }
+    }
+
+    fun deleteOfflinePages(chapters: List<Chapter>) {
+        screenModelScope.launchIO {
+            val jobs = successState?.mokuroJobs ?: return@launchIO
+            chapters.forEach { chapter ->
+                val job = jobs[chapter.id] ?: return@forEach
+                if (job.isOfflineAvailable) {
+                    val dir = File(context.filesDir, "mokuro/${job.jobId}")
+                    dir.deleteRecursively()
+                    upsertMokuroJob.await(job.copy(isOfflineAvailable = false))
+                }
+            }
+        }
     }
 
     private suspend fun submitMokuroJobs(chapters: List<Chapter>) {
