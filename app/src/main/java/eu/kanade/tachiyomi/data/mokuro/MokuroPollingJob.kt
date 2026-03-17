@@ -54,6 +54,7 @@ class MokuroPollingJob(
         return@withIOContext when (poller.poll(chapterId)) {
             "done" -> {
                 notifier.showDone(chapterId, chapterName)
+                MokuroPageDownloadJob.enqueue(applicationContext, chapterId, chapterName)
                 Result.success()
             }
             "failed" -> {

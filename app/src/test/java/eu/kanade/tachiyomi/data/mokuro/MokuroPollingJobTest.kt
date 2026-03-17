@@ -1,10 +1,15 @@
 package eu.kanade.tachiyomi.data.mokuro
 
+import androidx.work.ExistingWorkPolicy
+import androidx.work.WorkManager
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.mokuro.interactor.GetMokuroJobByChapterId
@@ -76,6 +81,33 @@ class MokuroPollingJobTest {
         result shouldBe "timeout"
         coVerify {
             upsertMokuroJob.await(match { it.state == "failed" && it.errorMessage == "Processing timed out" })
+        }
+    }
+
+    @Test
+    fun `enqueues download job when state is done`() {
+        val chapterId = 1L
+        val chapterName = "Chapter 1"
+
+        // Arrange: mock WorkManager
+        val workManager = mockk<WorkManager>(relaxed = true)
+        mockkStatic(WorkManager::class)
+        try {
+            every { WorkManager.getInstance(any()) } returns workManager
+
+            val context = mockk<android.content.Context>(relaxed = true)
+            MokuroPageDownloadJob.enqueue(context, chapterId, chapterName)
+
+            // Assert
+            verify {
+                workManager.enqueueUniqueWork(
+                    "mokuro_download_$chapterId",
+                    ExistingWorkPolicy.KEEP,
+                    any(),
+                )
+            }
+        } finally {
+            unmockkStatic(WorkManager::class)
         }
     }
 }
