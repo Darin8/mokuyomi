@@ -33,6 +33,8 @@ import androidx.compose.material.icons.outlined.Input
 import androidx.compose.material.icons.outlined.NewLabel
 import androidx.compose.material.icons.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.RemoveDone
+import androidx.compose.material.icons.outlined.CloudDownload
+import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -87,6 +89,8 @@ fun EntryBottomActionMenu(
     onInternalClicked: (() -> Unit)? = null,
     onSendToMokuroClicked: (() -> Unit)? = null,
     isMokuroRetry: Boolean = false,
+    onDownloadOfflineClicked: (() -> Unit)? = null,
+    onDeleteOfflineClicked: (() -> Unit)? = null,
 ) {
     AnimatedVisibility(
         visible = visible,
@@ -240,19 +244,37 @@ fun EntryBottomActionMenu(
                         onClick = onInternalClicked,
                     )
                 }
-                if (onSendToMokuroClicked != null && isManga) {
-                    val label = if (isMokuroRetry) {
-                        stringResource(AYMR.strings.action_retry_mokuro)
-                    } else {
-                        stringResource(AYMR.strings.action_send_to_mokuro)
+                if (isManga) {
+                    when {
+                        onDeleteOfflineClicked != null -> Button(
+                            title = stringResource(AYMR.strings.action_delete_offline_pages),
+                            icon = Icons.Outlined.CloudOff,
+                            toConfirm = confirm[11],
+                            onLongClick = { onLongClickItem(11) },
+                            onClick = onDeleteOfflineClicked,
+                        )
+                        onDownloadOfflineClicked != null -> Button(
+                            title = stringResource(AYMR.strings.action_download_offline),
+                            icon = Icons.Outlined.CloudDownload,
+                            toConfirm = confirm[11],
+                            onLongClick = { onLongClickItem(11) },
+                            onClick = onDownloadOfflineClicked,
+                        )
+                        onSendToMokuroClicked != null -> {
+                            val label = if (isMokuroRetry) {
+                                stringResource(AYMR.strings.action_retry_mokuro)
+                            } else {
+                                stringResource(AYMR.strings.action_send_to_mokuro)
+                            }
+                            Button(
+                                title = label,
+                                icon = Icons.Outlined.Translate,
+                                toConfirm = confirm[11],
+                                onLongClick = { onLongClickItem(11) },
+                                onClick = onSendToMokuroClicked,
+                            )
+                        }
                     }
-                    Button(
-                        title = label,
-                        icon = Icons.Outlined.Translate,
-                        toConfirm = confirm[11],
-                        onLongClick = { onLongClickItem(11) },
-                        onClick = onSendToMokuroClicked,
-                    )
                 }
             }
         }

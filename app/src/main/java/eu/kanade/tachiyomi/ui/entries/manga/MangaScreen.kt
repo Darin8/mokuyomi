@@ -120,6 +120,33 @@ class MangaScreen(
             }
         }
 
+        val selectedChapters = successState.chapters.filter { it.selected }
+        val selectedJobs = selectedChapters.mapNotNull { successState.mokuroJobs[it.chapter.id] }
+        val allDone = selectedChapters.isNotEmpty() &&
+            selectedChapters.all { successState.mokuroJobs[it.chapter.id]?.isDone == true }
+        val allOffline = allDone && selectedJobs.all { it.isOfflineAvailable }
+
+        val onDeleteOfflineClicked: (() -> Unit)? = if (allOffline) {
+            {
+                screenModel.deleteOfflinePages(selectedChapters.map { it.chapter })
+                screenModel.toggleAllSelection(false)
+            }
+        } else null
+        val onDownloadOfflineClicked: (() -> Unit)? = if (!allOffline && allDone) {
+            {
+                screenModel.downloadOfflinePages(selectedChapters.map { it.chapter })
+                screenModel.toggleAllSelection(false)
+            }
+        } else null
+        val onSendToMokuroClicked: (() -> Unit)? = if (!allDone) {
+            {
+                screenModel.sendToMokuro(selectedChapters.map { it.chapter })
+                screenModel.toggleAllSelection(false)
+            }
+        } else null
+        val isMokuroRetry = !allDone && selectedChapters.isNotEmpty() &&
+            selectedChapters.all { successState.mokuroJobs[it.chapter.id]?.isFailed == true }
+
         MangaScreen(
             state = successState,
             snackbarHostState = screenModel.snackbarHostState,
@@ -199,13 +226,10 @@ class MangaScreen(
             onChapterSelected = screenModel::toggleSelection,
             onAllChapterSelected = screenModel::toggleAllSelection,
             onInvertSelection = screenModel::invertSelection,
-            onSendToMokuroClicked = {
-                screenModel.sendToMokuro(successState.chapters.filter { it.selected }.map { it.chapter })
-                screenModel.toggleAllSelection(false)
-            },
-            isMokuroRetry = successState.chapters.filter { it.selected }.let { selected ->
-                selected.isNotEmpty() && selected.all { successState.mokuroJobs[it.chapter.id]?.isFailed == true }
-            },
+            onDeleteOfflineClicked = onDeleteOfflineClicked,
+            onDownloadOfflineClicked = onDownloadOfflineClicked,
+            onSendToMokuroClicked = onSendToMokuroClicked,
+            isMokuroRetry = isMokuroRetry,
         )
 
         var showScanlatorsDialog by remember { mutableStateOf(false) }

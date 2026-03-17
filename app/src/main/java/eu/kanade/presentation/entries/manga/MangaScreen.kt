@@ -137,6 +137,8 @@ fun MangaScreen(
     // For Mokuro
     onSendToMokuroClicked: (() -> Unit)?,
     isMokuroRetry: Boolean,
+    onDownloadOfflineClicked: (() -> Unit)?,
+    onDeleteOfflineClicked: (() -> Unit)?,
 ) {
     val context = LocalContext.current
     val onCopyTagToClipboard: (tag: String) -> Unit = {
@@ -187,6 +189,8 @@ fun MangaScreen(
             onSettingsClicked = onSettingsClicked,
             onSendToMokuroClicked = onSendToMokuroClicked,
             isMokuroRetry = isMokuroRetry,
+            onDownloadOfflineClicked = onDownloadOfflineClicked,
+            onDeleteOfflineClicked = onDeleteOfflineClicked,
         )
     } else {
         MangaScreenLargeImpl(
@@ -225,6 +229,8 @@ fun MangaScreen(
             onSettingsClicked = onSettingsClicked,
             onSendToMokuroClicked = onSendToMokuroClicked,
             isMokuroRetry = isMokuroRetry,
+            onDownloadOfflineClicked = onDownloadOfflineClicked,
+            onDeleteOfflineClicked = onDeleteOfflineClicked,
         )
     }
 }
@@ -279,6 +285,8 @@ private fun MangaScreenSmallImpl(
     onInvertSelection: () -> Unit,
     onSendToMokuroClicked: (() -> Unit)?,
     isMokuroRetry: Boolean,
+    onDownloadOfflineClicked: (() -> Unit)?,
+    onDeleteOfflineClicked: (() -> Unit)?,
 ) {
     val chapterListState = rememberLazyListState()
 
@@ -352,6 +360,8 @@ private fun MangaScreenSmallImpl(
                 fillFraction = 1f,
                 onSendToMokuroClicked = onSendToMokuroClicked,
                 isMokuroRetry = isMokuroRetry,
+                onDownloadOfflineClicked = onDownloadOfflineClicked,
+                onDeleteOfflineClicked = onDeleteOfflineClicked,
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -533,6 +543,8 @@ fun MangaScreenLargeImpl(
     onInvertSelection: () -> Unit,
     onSendToMokuroClicked: (() -> Unit)?,
     isMokuroRetry: Boolean,
+    onDownloadOfflineClicked: (() -> Unit)?,
+    onDeleteOfflineClicked: (() -> Unit)?,
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
@@ -603,6 +615,8 @@ fun MangaScreenLargeImpl(
                     fillFraction = 0.5f,
                     onSendToMokuroClicked = onSendToMokuroClicked,
                     isMokuroRetry = isMokuroRetry,
+                    onDownloadOfflineClicked = onDownloadOfflineClicked,
+                    onDeleteOfflineClicked = onDeleteOfflineClicked,
                 )
             }
         },
@@ -746,6 +760,8 @@ private fun SharedMangaBottomActionMenu(
     modifier: Modifier = Modifier,
     onSendToMokuroClicked: (() -> Unit)? = null,
     isMokuroRetry: Boolean = false,
+    onDownloadOfflineClicked: (() -> Unit)? = null,
+    onDeleteOfflineClicked: (() -> Unit)? = null,
 ) {
     EntryBottomActionMenu(
         visible = selected.isNotEmpty(),
@@ -778,6 +794,8 @@ private fun SharedMangaBottomActionMenu(
         isManga = true,
         onSendToMokuroClicked = onSendToMokuroClicked,
         isMokuroRetry = isMokuroRetry,
+        onDownloadOfflineClicked = onDownloadOfflineClicked,
+        onDeleteOfflineClicked = onDeleteOfflineClicked,
     )
 }
 
