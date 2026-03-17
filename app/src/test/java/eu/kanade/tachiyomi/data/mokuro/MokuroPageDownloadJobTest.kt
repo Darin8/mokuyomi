@@ -58,6 +58,7 @@ class MokuroPageDownloadJobTest {
         val result = downloader.download(chapterId = 1L, filesDir = dir)
 
         result shouldBe false
+        coVerify(exactly = 0) { upsertJob.await(any()) }
         File(dir, "mokuro/j1").exists() shouldBe false  // partial files cleaned up
 
         dir.deleteRecursively()
