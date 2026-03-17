@@ -89,6 +89,7 @@ import tachiyomi.domain.track.manga.interactor.GetMangaTracks
 import tachiyomi.i18n.MR
 import tachiyomi.i18n.aniyomi.AYMR
 import eu.kanade.tachiyomi.data.mokuro.MokuroApiClient
+import eu.kanade.tachiyomi.data.mokuro.MokuroPageDownloadJob
 import eu.kanade.tachiyomi.data.mokuro.MokuroPollingJob
 import eu.kanade.tachiyomi.data.mokuro.MokuroPreferences
 import tachiyomi.domain.mokuro.interactor.GetAllMokuroJobs
