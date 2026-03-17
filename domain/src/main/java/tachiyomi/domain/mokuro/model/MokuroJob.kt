@@ -8,6 +8,7 @@ data class MokuroJob(
     val errorMessage: String?,
     val serverUrl: String,
     val createdAt: Long,
+    val isOfflineAvailable: Boolean = false,
 ) {
     val isDone: Boolean get() = state == "done"
     val isFailed: Boolean get() = state == "failed"

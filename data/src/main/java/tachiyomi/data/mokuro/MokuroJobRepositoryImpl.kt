@@ -28,6 +28,7 @@ class MokuroJobRepositoryImpl(
                 error_message = job.errorMessage,
                 server_url = job.serverUrl,
                 created_at = job.createdAt,
+                is_offline_available = if (job.isOfflineAvailable) 1L else 0L,
             )
         }
 
@@ -38,8 +39,10 @@ class MokuroJobRepositoryImpl(
 private fun mapRow(
     chapterId: Long, jobId: String, state: String, pageCount: Long?,
     errorMessage: String?, serverUrl: String, createdAt: Long,
+    isOfflineAvailable: Long,
 ) = MokuroJob(
     chapterId = chapterId, jobId = jobId, state = state,
     pageCount = pageCount?.toInt(), errorMessage = errorMessage,
     serverUrl = serverUrl, createdAt = createdAt,
+    isOfflineAvailable = isOfflineAvailable != 0L,
 )
