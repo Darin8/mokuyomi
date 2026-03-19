@@ -10,17 +10,17 @@ class MokuroJobRepositoryImpl(
 ) : MokuroJobRepository {
 
     override suspend fun getByChapterId(chapterId: Long): MokuroJob? =
-        handler.awaitOneOrNull { mokuroJobsQueries.selectByChapterId(chapterId, ::mapRow) }
+        handler.awaitOneOrNull { mokuro_jobsQueries.selectByChapterId(chapterId, ::mapRow) }
 
     override suspend fun getAll(): List<MokuroJob> =
-        handler.awaitList { mokuroJobsQueries.selectAll(::mapRow) }
+        handler.awaitList { mokuro_jobsQueries.selectAll(::mapRow) }
 
     override fun subscribeAll(): Flow<List<MokuroJob>> =
-        handler.subscribeToList { mokuroJobsQueries.selectAll(::mapRow) }
+        handler.subscribeToList { mokuro_jobsQueries.selectAll(::mapRow) }
 
     override suspend fun upsert(job: MokuroJob) =
         handler.await {
-            mokuroJobsQueries.insertOrReplace(
+            mokuro_jobsQueries.insertOrReplace(
                 chapter_id = job.chapterId,
                 job_id = job.jobId,
                 state = job.state,
@@ -33,7 +33,7 @@ class MokuroJobRepositoryImpl(
         }
 
     override suspend fun delete(chapterId: Long) =
-        handler.await { mokuroJobsQueries.deleteByChapterId(chapterId) }
+        handler.await { mokuro_jobsQueries.deleteByChapterId(chapterId) }
 }
 
 private fun mapRow(

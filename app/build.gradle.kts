@@ -292,6 +292,7 @@ dependencies {
 
     // Tests
     testImplementation(libs.bundles.test)
+    testImplementation(libs.okhttp.mockwebserver)
 
     // For detecting memory leaks; see https://square.github.io/leakcanary/
     // debugImplementation(libs.leakcanary.android)

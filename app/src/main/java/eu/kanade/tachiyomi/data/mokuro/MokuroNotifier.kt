@@ -14,7 +14,7 @@ class MokuroNotifier(private val context: Context) {
 
     fun showProgress(chapterId: Long, chapterName: String, progress: Float) {
         val notification = NotificationCompat.Builder(context, Notifications.CHANNEL_MOKURO_PROGRESS)
-            .setSmallIcon(R.drawable.ic_notification)
+            .setSmallIcon(R.drawable.ic_glasses_24dp)
             .setContentTitle(chapterName)
             .setContentText("Processing with Mokuro…")
             .setOngoing(true)
@@ -25,7 +25,7 @@ class MokuroNotifier(private val context: Context) {
 
     fun showDone(chapterId: Long, chapterName: String) {
         val notification = NotificationCompat.Builder(context, Notifications.CHANNEL_MOKURO_PROGRESS)
-            .setSmallIcon(R.drawable.ic_notification)
+            .setSmallIcon(R.drawable.ic_glasses_24dp)
             .setContentTitle(chapterName)
             .setContentText("Ready to read in Mokuro reader")
             .setAutoCancel(true)
@@ -35,7 +35,7 @@ class MokuroNotifier(private val context: Context) {
 
     fun showFailed(chapterId: Long, chapterName: String, errorMessage: String?) {
         val notification = NotificationCompat.Builder(context, Notifications.CHANNEL_MOKURO_PROGRESS)
-            .setSmallIcon(R.drawable.ic_notification)
+            .setSmallIcon(R.drawable.ic_glasses_24dp)
             .setContentTitle(chapterName)
             .setContentText("Processing failed: ${errorMessage ?: "Unknown error"}")
             .setAutoCancel(true)
@@ -45,7 +45,7 @@ class MokuroNotifier(private val context: Context) {
 
     fun showDownloadProgress(chapterId: Long, chapterName: String, current: Int, total: Int) {
         val notification = NotificationCompat.Builder(context, Notifications.CHANNEL_MOKURO_PROGRESS)
-            .setSmallIcon(R.drawable.ic_notification)
+            .setSmallIcon(R.drawable.ic_glasses_24dp)
             .setContentTitle(chapterName)
             .setContentText("Downloading $chapterName — $current / $total pages")
             .setOngoing(true)
@@ -56,7 +56,7 @@ class MokuroNotifier(private val context: Context) {
 
     fun showOfflineReady(chapterId: Long, chapterName: String) {
         val notification = NotificationCompat.Builder(context, Notifications.CHANNEL_MOKURO_PROGRESS)
-            .setSmallIcon(R.drawable.ic_notification)
+            .setSmallIcon(R.drawable.ic_glasses_24dp)
             .setContentTitle(chapterName)
             .setContentText("Ready for offline reading")
             .setAutoCancel(true)
@@ -66,7 +66,7 @@ class MokuroNotifier(private val context: Context) {
 
     fun showOfflineFailed(chapterId: Long, chapterName: String) {
         val notification = NotificationCompat.Builder(context, Notifications.CHANNEL_MOKURO_PROGRESS)
-            .setSmallIcon(R.drawable.ic_notification)
+            .setSmallIcon(R.drawable.ic_glasses_24dp)
             .setContentTitle(chapterName)
             .setContentText("Could not download offline pages for $chapterName")
             .setAutoCancel(true)

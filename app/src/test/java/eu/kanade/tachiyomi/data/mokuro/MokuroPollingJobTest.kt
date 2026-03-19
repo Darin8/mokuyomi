@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.data.mokuro
 
 import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
@@ -103,7 +104,7 @@ class MokuroPollingJobTest {
                 workManager.enqueueUniqueWork(
                     "mokuro_download_$chapterId",
                     ExistingWorkPolicy.KEEP,
-                    any(),
+                    any<OneTimeWorkRequest>(),
                 )
             }
         } finally {

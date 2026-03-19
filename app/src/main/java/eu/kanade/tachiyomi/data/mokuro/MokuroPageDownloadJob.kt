@@ -68,7 +68,7 @@ class MokuroPageDownloadJob(
         val chapterId = inputData.getLong(KEY_CHAPTER_ID, 0L)
         val chapterName = inputData.getString(KEY_CHAPTER_NAME) ?: "Chapter"
         val notification = NotificationCompat.Builder(applicationContext, Notifications.CHANNEL_MOKURO_PROGRESS)
-            .setSmallIcon(R.drawable.ic_notification)
+            .setSmallIcon(R.drawable.ic_glasses_24dp)
             .setContentTitle(chapterName)
             .setContentText("Downloading offline…")
             .setOngoing(true)
