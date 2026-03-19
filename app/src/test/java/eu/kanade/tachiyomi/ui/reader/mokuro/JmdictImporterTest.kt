@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.ui.reader.mokuro
 
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.file.shouldExist
 import io.kotest.matchers.file.shouldNotExist
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
