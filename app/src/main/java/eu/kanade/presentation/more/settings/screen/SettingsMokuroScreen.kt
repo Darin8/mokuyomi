@@ -5,8 +5,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import eu.kanade.presentation.more.settings.Preference
 import eu.kanade.tachiyomi.data.mokuro.MokuroPreferences
@@ -31,6 +34,7 @@ object SettingsMokuroScreen : SearchableSettings {
         val context = LocalContext.current
         val scope = rememberCoroutineScope()
         val importer = remember { JmdictImporter(context) }
+        var isImported by remember { mutableStateOf(importer.isImported()) }
 
         // rememberLauncherForActivityResult must be called unconditionally at top level.
         val importLauncher = rememberLauncherForActivityResult(
@@ -40,6 +44,7 @@ object SettingsMokuroScreen : SearchableSettings {
             scope.launch {
                 try {
                     importer.import(uri)
+                    isImported = true
                     context.toast(AYMR.strings.pref_mokuro_import_dictionary_success)
                 } catch (e: Exception) {
                     context.toast(AYMR.strings.pref_mokuro_import_dictionary_error)
@@ -68,7 +73,7 @@ object SettingsMokuroScreen : SearchableSettings {
                 preferenceItems = persistentListOf(
                     Preference.PreferenceItem.TextPreference(
                         title = stringResource(AYMR.strings.pref_mokuro_import_dictionary),
-                        subtitle = if (importer.isImported()) {
+                        subtitle = if (isImported) {
                             stringResource(AYMR.strings.pref_mokuro_import_dictionary_summary_ready)
                         } else {
                             stringResource(AYMR.strings.pref_mokuro_import_dictionary_summary_none)
