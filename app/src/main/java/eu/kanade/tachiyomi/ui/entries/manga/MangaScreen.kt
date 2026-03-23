@@ -132,19 +132,19 @@ class MangaScreen(
                 screenModel.toggleAllSelection(false)
             }
         } else null
-        val onDownloadOfflineClicked: (() -> Unit)? = if (!allOffline && allDone) {
+        val onDownloadOfflineClicked: (() -> Unit)? = if (false) {
             {
                 screenModel.downloadOfflinePages(selectedChapters.map { it.chapter })
                 screenModel.toggleAllSelection(false)
             }
         } else null
-        val onSendToMokuroClicked: (() -> Unit)? = if (!allDone) {
+        val onSendToMokuroClicked: (() -> Unit)? = if (selectedChapters.isNotEmpty()) {
             {
                 screenModel.sendToMokuro(selectedChapters.map { it.chapter })
                 screenModel.toggleAllSelection(false)
             }
         } else null
-        val isMokuroRetry = !allDone && selectedChapters.isNotEmpty() &&
+        val isMokuroRetry = selectedChapters.isNotEmpty() &&
             selectedChapters.all { successState.mokuroJobs[it.chapter.id]?.isFailed == true }
 
         MangaScreen(
@@ -159,7 +159,7 @@ class MangaScreen(
                 val mokuroJob = successState.mokuroJobs[chapter.id]
                 if (mokuroJob?.isDone == true) {
                     context.startActivity(
-                        MokuroReaderActivity.newIntent(context, mokuroJob.jobId, mokuroJob.pageCount ?: 1)
+                        MokuroReaderActivity.newIntent(context, mokuroJob.jobId)
                     )
                 } else {
                     openChapter(context, chapter)
@@ -200,7 +200,7 @@ class MangaScreen(
                     val mokuroJob = successState.mokuroJobs[chapter.id]
                     if (mokuroJob?.isDone == true) {
                         context.startActivity(
-                            MokuroReaderActivity.newIntent(context, mokuroJob.jobId, mokuroJob.pageCount ?: 1)
+                            MokuroReaderActivity.newIntent(context, mokuroJob.jobId)
                         )
                     } else {
                         openChapter(context, chapter)
