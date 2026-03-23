@@ -38,6 +38,7 @@ import eu.kanade.tachiyomi.data.track.EnhancedMangaTracker
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.network.HttpException
 import eu.kanade.tachiyomi.source.MangaSource
+import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.ui.reader.setting.ReaderPreferences
 import eu.kanade.tachiyomi.util.chapter.getNextUnread
 import eu.kanade.tachiyomi.util.removeCovers
@@ -1180,9 +1181,15 @@ class MangaScreenModel(
             withUIContext { context.toast("Mokuro server not configured") }
             return
         }
+        val sourceBaseUrl = (successState?.source as? HttpSource)?.baseUrl
         chapters.forEach { chapter ->
             try {
-                val response = mokuroApiClient.submitJob(serverUrl, token, chapter.url, chapter.id)
+                val chapterUrl = if (sourceBaseUrl != null && !chapter.url.startsWith("http")) {
+                    sourceBaseUrl + chapter.url
+                } else {
+                    chapter.url
+                }
+                val response = mokuroApiClient.submitJob(serverUrl, token, chapterUrl, chapter.id)
                 upsertMokuroJob.await(
                     MokuroJob(
                         chapterId = chapter.id,
