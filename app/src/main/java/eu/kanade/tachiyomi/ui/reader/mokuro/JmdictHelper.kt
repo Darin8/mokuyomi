@@ -20,10 +20,11 @@ class JmdictHelper(private val context: Context) {
 
     private val dbPath: File get() = File(context.filesDir, "jmdict.db")
 
-    private val db: SQLiteDatabase by lazy {
+    private val dbDelegate: Lazy<SQLiteDatabase> = lazy {
         ensureDatabase()
         SQLiteDatabase.openDatabase(dbPath.path, null, SQLiteDatabase.OPEN_READONLY)
     }
+    private val db: SQLiteDatabase by dbDelegate
 
     private val deinflectRules: List<DeinflectRule> by lazy {
         val json = context.assets.open("deinflect.json").bufferedReader().readText()
@@ -74,5 +75,5 @@ class JmdictHelper(private val context: Context) {
         }
     }
 
-    fun close() = db.close()
+    fun close() { if (dbDelegate.isInitialized()) db.close() }
 }
