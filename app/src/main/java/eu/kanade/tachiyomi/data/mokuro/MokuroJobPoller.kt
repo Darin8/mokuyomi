@@ -49,6 +49,6 @@ class MokuroJobPoller(
 
     companion object {
         const val POLL_INTERVAL_MS = 5_000L
-        const val TIMEOUT_MS = 35 * 60 * 1_000L
+        const val TIMEOUT_MS = 3 * 60 * 60 * 1_000L // 3 hours
     }
 }

@@ -81,22 +81,10 @@ class MokuroApiClient(
         return execute(request)
     }
 
-    /**
-     * Constructs the URL for a processed page.
-     * @param pageIndex 1-based page index (1 = first page, maps to page_001.html).
-     */
-    fun pageUrl(serverUrl: String, token: String, jobId: String, pageIndex: Int): String {
-        val filename = "page_%03d.html".format(pageIndex)
-        return "$serverUrl/jobs/$jobId/pages/$filename?token=$token"
-    }
-
-    /**
-     * Downloads the HTML content of a single processed page.
-     * @param pageIndex 1-based page index.
-     */
-    fun fetchPageHtml(serverUrl: String, token: String, jobId: String, pageIndex: Int): String {
+    fun fetchPageHtml(serverUrl: String, token: String, jobId: String, page: Int): String {
         val request = Request.Builder()
-            .url(pageUrl(serverUrl, token, jobId, pageIndex))
+            .url("$serverUrl/jobs/$jobId/files/page_%03d.html".format(page))
+            .addHeader("Authorization", "Bearer $token")
             .get()
             .build()
         return httpClient.newCall(request).execute().use { response ->
@@ -105,4 +93,7 @@ class MokuroApiClient(
             body ?: error("Empty response body")
         }
     }
+
+    fun viewerUrl(serverUrl: String, token: String, jobId: String): String =
+        "$serverUrl/jobs/$jobId/files/viewer.html?token=$token"
 }

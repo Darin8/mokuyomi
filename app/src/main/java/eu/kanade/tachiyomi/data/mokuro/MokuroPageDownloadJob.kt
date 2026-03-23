@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.data.mokuro
 
 import android.content.Context
+import android.content.pm.ServiceInfo
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
@@ -74,7 +75,7 @@ class MokuroPageDownloadJob(
             .setOngoing(true)
             .setProgress(100, 0, true)
             .build()
-        return ForegroundInfo(notifier.notifId(chapterId), notification)
+        return ForegroundInfo(notifier.notifId(chapterId), notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
     }
 
     override suspend fun doWork(): Result = withIOContext {
