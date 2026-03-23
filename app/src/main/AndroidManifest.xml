@@ -278,7 +278,7 @@
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             android:foregroundServiceType="dataSync"
-            tools:node="merge" />
+            tools:node="replace" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
