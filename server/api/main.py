@@ -42,14 +42,15 @@ async def get_job_status(job_id: str):
         raise HTTPException(status_code=404, detail="Job not found")
     return job
 
-@app.get("/jobs/{job_id}/pages/{filename:path}")
-async def serve_page(job_id: str, filename: str, token: str = Query(None)):
+@app.get("/jobs/{job_id}/files/{filename:path}")
+async def serve_file(job_id: str, filename: str, token: str = Query(None)):
     from api.config import settings as _s
-    if token != _s.token:
+    # Only require token for the HTML viewer; images are protected by the unguessable UUID job_id
+    if filename.endswith(".html") and token != _s.token:
         raise HTTPException(status_code=401, detail="Invalid token")
-    if ".." in filename or "/" in filename:
+    if ".." in filename:
         raise HTTPException(status_code=400, detail="Invalid filename")
     file_path = os.path.join(_s.processed_dir, job_id, filename)
     if not os.path.isfile(file_path):
         raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(file_path, media_type="text/html")
+    return FileResponse(file_path)
